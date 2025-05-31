@@ -20,6 +20,7 @@ build-backend = "poetry.core.masonry.api"
 ruff = "^0.11.12"
 pytest = "^8.3.5"
 pytest-cov = "^6.1.1"
+taskipy = "^1.14.1"
 
 [tool.ruff]
 line-length = 79
@@ -36,3 +37,15 @@ quote-style = 'single'
 [tool.pytest.ini_options]
 pythonpath = '.'
 addopts = '-p no:warnings'
+
+[tool.taskipy.tasks]
+lint = 'ruff check'
+
+pre_format = 'ruff check --fix'
+format = 'ruff format'
+
+run = 'fastapi dev fastapi_zero_course/app.py'
+
+pre_test = 'task lint'
+test = 'pytest -s -x --cov=fastapi_zero_course -vv'
+post_test = 'coverage html'
