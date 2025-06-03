@@ -3,9 +3,9 @@ from http import HTTPStatus
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-from fastapi_zero_course.schemas import MessageClass
+from todo_list_api.schemas import MessageClass
 
-app = FastAPI(title='FastAPI Zero Course API')
+app = FastAPI(title='ToDo List API')
 
 
 @app.get('/', status_code=HTTPStatus.OK, response_model=MessageClass)

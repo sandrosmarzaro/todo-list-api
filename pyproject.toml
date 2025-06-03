@@ -1,7 +1,7 @@
 [project]
-name = "fastapi-zero-course"
+name = "todo-list"
 version = "0.1.0"
-description = ""
+description = "A To Do List API make in dunossauro course"
 authors = [
     {name = "Sandro Smarzaro",email = "sansmarzaro@gmail.com"}
 ]
@@ -44,8 +44,8 @@ lint = 'ruff check'
 pre_format = 'ruff check --fix'
 format = 'ruff format'
 
-run = 'fastapi dev fastapi_zero_course/app.py'
+run = 'fastapi dev todo_list_api/app.py'
 
 pre_test = 'task lint'
-test = 'pytest -s -x --cov=fastapi_zero_course -vv'
+test = 'pytest -s -x --cov=todo_list_api -vv'
 post_test = 'coverage html'
