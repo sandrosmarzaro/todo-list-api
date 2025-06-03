@@ -1,5 +1,5 @@
 [project]
-name = "todo-list"
+name = "todo-list-api"
 version = "0.1.0"
 description = "A To Do List API make in dunossauro course"
 authors = [
