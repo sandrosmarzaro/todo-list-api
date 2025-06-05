@@ -82,7 +82,7 @@ def remove_user(user_id: int):
 @app.get(
     '/api/v1/users/{user_id}',
     status_code=HTTPStatus.OK,
-    response_model=UserPublic
+    response_model=UserPublic,
 )
 def get_user(user_id: int):
     if user_id < 1 or user_id > len(database):
