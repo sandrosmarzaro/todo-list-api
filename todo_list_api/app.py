@@ -1,13 +1,12 @@
 from http import HTTPStatus
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-
-from sqlalchemy import create_engine, select
-from todo_list_api.settings import Settings
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from todo_list_api.models import User
 
+from todo_list_api.database import get_session
+from todo_list_api.models import User
 from todo_list_api.schemas import (
     MessageClass,
     UserList,
@@ -38,9 +37,7 @@ def read_hello_world():
     status_code=HTTPStatus.CREATED,
     response_model=UserPublic,
 )
-def create_user(user: UserSchema):
-    engine = create_engine(Settings().DATABASE_URL)
-    session = Session(engine)
+def create_user(user: UserSchema, session: Session = Depends(get_session)):
     if db_user := session.scalar(
         select(User).where(
             (User.username == user.username) | (User.email == user.email)
@@ -72,8 +69,12 @@ def create_user(user: UserSchema):
     status_code=HTTPStatus.OK,
     response_model=UserList,
 )
-def read_users():
-    return {'users': database}
+def read_users(
+    session: Session = Depends(get_session),
+    limit: int = 10,
+    offset: int = 0,
+):
+    return {'users': session.scalars(select(User).limit(limit).offset(offset))}
 
 
 @app.put(
@@ -81,30 +82,40 @@ def read_users():
     status_code=HTTPStatus.OK,
     response_model=UserPublic,
 )
-def update_user(user_id: int, user: UserSchema):
-    if user_id < 1 or user_id > len(database):
+def update_user(
+    user_id: int, user: UserSchema, session: Session = Depends(get_session)
+):
+    user_db = session.scalar(select(User).where(User.id == user_id))
+
+    if not user_db:
         raise HTTPException(
-            detail='User not found.', status_code=HTTPStatus.NOT_FOUND
+            status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
         )
+    user_db.username = user.username
+    user_db.email = user.email
+    user_db.password = user.password
 
-    user_with_id = UserPublic(**user.model_dump(), id=user_id)
-    database[user_id - 1] = user_with_id
+    session.add(user_db)
+    session.commit()
+    session.refresh(user_db)
 
-    return user_with_id
+    return user_db
 
 
 @app.delete(
     '/api/v1/users/{user_id}',
-    status_code=HTTPStatus.OK,
-    response_model=UserPublic,
+    status_code=HTTPStatus.NO_CONTENT,
 )
-def remove_user(user_id: int):
-    if user_id < 1 or user_id > len(database):
+def remove_user(user_id: int, session: Session = Depends(get_session)):
+    user_db = session.scalar(select(User).where(User.id == user_id))
+
+    if not user_db:
         raise HTTPException(
-            detail='User not found.', status_code=HTTPStatus.NOT_FOUND
+            status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
         )
 
-    return database.pop(user_id - 1)
+    session.delete(user_db)
+    session.commit()
 
 
 @app.get(
@@ -112,10 +123,12 @@ def remove_user(user_id: int):
     status_code=HTTPStatus.OK,
     response_model=UserPublic,
 )
-def get_user(user_id: int):
-    if user_id < 1 or user_id > len(database):
+def get_user(user_id: int, session: Session = Depends(get_session)):
+    user_db = session.scalar(select(User).where(User.id == user_id))
+
+    if not user_db:
         raise HTTPException(
-            detail='User not found.', status_code=HTTPStatus.NOT_FOUND
+            status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
         )
 
-    return database[user_id - 1]
+    return user_db
