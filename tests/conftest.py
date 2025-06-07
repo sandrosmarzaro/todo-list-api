@@ -5,19 +5,32 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
 from todo_list_api.app import app
-from todo_list_api.models import table_registry
+from todo_list_api.database import get_session
+from todo_list_api.models import User, table_registry
 
 
 @pytest.fixture
-def client():
-    return TestClient(app)
+def client(session):
+    def get_session_overdrive():
+        return session
+
+    with TestClient(app) as client:
+        app.dependency_overrides[get_session] = get_session_overdrive
+        yield client
+
+        app.dependency_overrides.clear()
 
 
 @pytest.fixture
 def session():
-    engine = create_engine('sqlite:///:memory:')
+    engine = create_engine(
+        'sqlite:///:memory:',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
     table_registry.metadata.create_all(engine)
 
     with Session(engine) as session:
@@ -44,3 +57,13 @@ def _mock_db_time(*, model, time=datetime(2025, 5, 20)):
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
+
+
+@pytest.fixture
+def user(session):
+    user = User(username='test', email='email@example.com', password='test123')
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
