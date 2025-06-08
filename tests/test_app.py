@@ -35,6 +35,34 @@ def test_api_v1_users_post_should_create_user(client):
     }
 
 
+def test_api_v1_users_post_should_raise_username_exception(client, user):
+    response = client.post(
+        '/api/v1/users',
+        json={
+            'username': 'test',
+            'email': 'email_2nd@example.com',
+            'password': 'test123',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username already exists!'}
+
+
+def test_api_v1_users_post_should_raise_email_exception(client, user):
+    response = client.post(
+        '/api/v1/users',
+        json={
+            'username': 'test2nd',
+            'email': 'email@example.com',
+            'password': 'test123',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Email already exists!'}
+
+
 def test_api_v1_users_get_should_return_empty_users(client):
     response = client.get('/api/v1/users')
 
@@ -92,8 +120,32 @@ def test_api_v1_users_put_should_raise_exception(client):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+def test_api_v1_users_put_should_raise_exeception_when_is_not_unique(
+    client, user
+):
+    client.post(
+        '/api/v1/users',
+        json={
+            'username': 'test2nd',
+            'email': 'second@email.com',
+            'password': 'test123',
+        },
+    )
+    response = client.put(
+        f'/api/v1/users/{user.id}',
+        json={
+            'username': 'test2nd',
+            'email': 'second@email.com',
+            'password': 'uPd4t$d',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username or email already exists!'}
+
+
 def test_api_v1_users_get_should_return_user(client, user):
-    response = client.get('/api/v1/users/1')
+    response = client.get(f'/api/v1/users/{user.id}')
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {

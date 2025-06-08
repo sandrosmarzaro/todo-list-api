@@ -3,6 +3,7 @@ from http import HTTPStatus
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from todo_list_api.database import get_session
@@ -91,15 +92,21 @@ def update_user(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
         )
-    user_db.username = user.username
-    user_db.email = user.email
-    user_db.password = user.password
+    try:
+        user_db.username = user.username
+        user_db.email = user.email
+        user_db.password = user.password
 
-    session.add(user_db)
-    session.commit()
-    session.refresh(user_db)
+        session.add(user_db)
+        session.commit()
+        session.refresh(user_db)
 
-    return user_db
+        return user_db
+    except IntegrityError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail='Username or email already exists!',
+        ) from e
 
 
 @app.delete(
@@ -124,11 +131,9 @@ def remove_user(user_id: int, session: Session = Depends(get_session)):
     response_model=UserPublic,
 )
 def get_user(user_id: int, session: Session = Depends(get_session)):
-    user_db = session.scalar(select(User).where(User.id == user_id))
-
-    if not user_db:
+    if user_db := session.scalar(select(User).where(User.id == user_id)):
+        return user_db
+    else:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
         )
-
-    return user_db
