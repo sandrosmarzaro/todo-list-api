@@ -18,6 +18,7 @@ from todo_list_api.schemas import (
 )
 from todo_list_api.security import (
     create_access_token,
+    get_current_user,
     get_password_hash,
     verify_password,
 )
@@ -80,9 +81,10 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
     response_model=UserList,
 )
 def read_users(
-    session: Session = Depends(get_session),
     limit: int = 10,
     offset: int = 0,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     return {'users': session.scalars(select(User).limit(limit).offset(offset))}
 
@@ -93,24 +95,26 @@ def read_users(
     response_model=UserPublic,
 )
 def update_user(
-    user_id: int, user: UserSchema, session: Session = Depends(get_session)
+    user_id: int,
+    user: UserSchema,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    user_db = session.scalar(select(User).where(User.id == user_id))
-
-    if not user_db:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
         )
     try:
-        user_db.username = user.username
-        user_db.email = user.email
-        user_db.password = get_password_hash(user.password)
+        current_user.username = user.username
+        current_user.email = user.email
+        current_user.password = get_password_hash(user.password)
 
-        session.add(user_db)
+        session.add(current_user)
         session.commit()
-        session.refresh(user_db)
+        session.refresh(current_user)
 
-        return user_db
+        return current_user
     except IntegrityError as e:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
@@ -122,15 +126,18 @@ def update_user(
     '/api/v1/users/{user_id}',
     status_code=HTTPStatus.NO_CONTENT,
 )
-def remove_user(user_id: int, session: Session = Depends(get_session)):
-    user_db = session.scalar(select(User).where(User.id == user_id))
-
-    if not user_db:
+def remove_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
         )
 
-    session.delete(user_db)
+    session.delete(current_user)
     session.commit()
 
 
@@ -139,13 +146,17 @@ def remove_user(user_id: int, session: Session = Depends(get_session)):
     status_code=HTTPStatus.OK,
     response_model=UserPublic,
 )
-def read_user(user_id: int, session: Session = Depends(get_session)):
-    if user_db := session.scalar(select(User).where(User.id == user_id)):
-        return user_db
-    else:
+def read_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
         )
+    return current_user
 
 
 @app.post('/api/v1/token/', response_model=Token)
