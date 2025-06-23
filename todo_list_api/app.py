@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -10,9 +11,15 @@ from todo_list_api.database import get_session
 from todo_list_api.models import User
 from todo_list_api.schemas import (
     MessageClass,
+    Token,
     UserList,
     UserPublic,
     UserSchema,
+)
+from todo_list_api.security import (
+    create_access_token,
+    get_password_hash,
+    verify_password,
 )
 
 app = FastAPI(title='ToDo List API')
@@ -56,7 +63,9 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
             )
 
     db_user = User(
-        username=user.username, password=user.password, email=user.email
+        username=user.username,
+        password=get_password_hash(user.password),
+        email=user.email,
     )
     session.add(db_user)
     session.commit()
@@ -95,7 +104,7 @@ def update_user(
     try:
         user_db.username = user.username
         user_db.email = user.email
-        user_db.password = user.password
+        user_db.password = get_password_hash(user.password)
 
         session.add(user_db)
         session.commit()
@@ -130,10 +139,36 @@ def remove_user(user_id: int, session: Session = Depends(get_session)):
     status_code=HTTPStatus.OK,
     response_model=UserPublic,
 )
-def get_user(user_id: int, session: Session = Depends(get_session)):
+def read_user(user_id: int, session: Session = Depends(get_session)):
     if user_db := session.scalar(select(User).where(User.id == user_id)):
         return user_db
     else:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User doesnt exist!'
         )
+
+
+@app.post('/api/v1/token/', response_model=Token)
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    user_db = session.scalar(
+        select(User).where(User.email == form_data.username)
+    )
+
+    if not user_db:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Email doesnt exists!',
+        )
+
+    if not verify_password(form_data.password, user_db.password):
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Incorrect password!',
+        )
+
+    access_token = create_access_token({'sub': user_db.email})
+
+    return {'access_token': access_token, 'token_type': 'Bearer'}
