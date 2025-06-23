@@ -180,3 +180,16 @@ def test_api_v1_users_delete_should_raise_exception(client):
     response = client.delete('/api/v1/users/2')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_api_v1_token_create_token(client, user):
+    response = client.post(
+        '/api/v1/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert 'access_token' in token
+    assert token['token_type'] == 'Bearer'
