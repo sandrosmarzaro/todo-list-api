@@ -176,7 +176,7 @@ def test_api_v1_users_delete_should_raise_exception(client, user, token):
 
 def test_api_v1_token_create_token(client, user):
     response = client.post(
-        '/api/v1/token',
+        '/api/v1/auth/token',
         data={'username': user.email, 'password': user.clean_password},
     )
 
@@ -189,7 +189,7 @@ def test_api_v1_token_create_token(client, user):
 
 def test_api_v1_token_raise_exception_when_invalid_email(client):
     response = client.post(
-        '/api/v1/token',
+        '/api/v1/auth/token',
         data={'username': 'invalid@email.com', 'password': 'test123'},
     )
 
@@ -199,7 +199,7 @@ def test_api_v1_token_raise_exception_when_invalid_email(client):
 
 def test_api_v1_token_raise_exception_when_invalid_password(client, user):
     response = client.post(
-        '/api/v1/token',
+        '/api/v1/auth/token',
         data={'username': user.email, 'password': 'invalid_password'},
     )
 

@@ -14,8 +14,8 @@ from todo_list_api.models import User
 
 pwd_context = PasswordHash.recommended()
 oauth2_scheme = OAuth2AuthorizationCodeBearer(
-    tokenUrl='/api/v1/token',
-    authorizationUrl='/api/v1/token',
+    tokenUrl='/api/v1/auth/token',
+    authorizationUrl='',
 )
 
 SECRET_KEY = 'tmp'
