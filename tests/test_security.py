@@ -4,22 +4,19 @@ from zoneinfo import ZoneInfo
 
 from jwt import decode, encode
 
-from todo_list_api.security import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    ALGORITHM,
-    SECRET_KEY,
-    create_access_token,
-)
-
-EXPIRE = datetime.now(tz=ZoneInfo('UTC')) + timedelta(
-    minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-)
+from todo_list_api.security import create_access_token
 
 
-def test_create_jwt():
+def generate_expire(settings):
+    return datetime.now(tz=ZoneInfo('UTC')) + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
+
+def test_create_jwt(settings):
     claims = {'test': 'test'}
     token = create_access_token(claims)
-    decoded = decode(token, SECRET_KEY, ALGORITHM)
+    decoded = decode(token, settings.SECRET_KEY, settings.ALGORITHM)
 
     assert decoded['test'] == claims['test']
     assert 'exp' in decoded
@@ -35,14 +32,14 @@ def test_jwt_invalid(client):
     assert response.json() == {'detail': 'Could not validate credentials'}
 
 
-def test_invalid_claims_without_sub(client, user):
+def test_invalid_claims_without_sub(client, user, settings):
     invalid_token = encode(
         {
             'sub': '',
-            'exp': EXPIRE,
+            'exp': generate_expire(settings),
         },
-        SECRET_KEY,
-        algorithm=ALGORITHM,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
     )
 
     response = client.get(
@@ -54,14 +51,14 @@ def test_invalid_claims_without_sub(client, user):
     assert response.json() == {'detail': 'Could not validate credentials'}
 
 
-def test_invalid_email_doesnt_exists(client, user):
+def test_invalid_email_doesnt_exists(client, user, settings):
     token = encode(
         {
             'sub': 'invalid@email.com',
-            'exp': EXPIRE,
+            'exp': generate_expire(settings),
         },
-        SECRET_KEY,
-        algorithm=ALGORITHM,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
     )
 
     response = client.get(

@@ -11,6 +11,7 @@ from todo_list_api.app import app
 from todo_list_api.database import get_session
 from todo_list_api.models import User, table_registry
 from todo_list_api.security import get_password_hash
+from todo_list_api.settings import Settings
 
 
 @pytest.fixture
@@ -89,3 +90,8 @@ def token(client, user):
     )
 
     return response.json()['access_token']
+
+
+@pytest.fixture
+def settings():
+    return Settings()
