@@ -40,8 +40,8 @@ def test_api_v1_users_post_should_raise_email_exception(client, user):
         '/api/v1/users',
         json={
             'username': 'test2nd',
-            'email': 'email@example.com',
-            'password': 'test123',
+            'email': user.email,
+            'password': user.password,
         },
     )
 
@@ -62,7 +62,7 @@ def test_api_v1_users_get_should_return_one_in_users(client, user, token):
 
 def test_api_v1_users_put_should_update_user(client, user, token):
     response = client.put(
-        '/api/v1/users/1',
+        f'/api/v1/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'name_updated',
@@ -73,15 +73,17 @@ def test_api_v1_users_put_should_update_user(client, user, token):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'id': 1,
+        'id': user.id,
         'username': 'name_updated',
         'email': 'newemail@example.com',
     }
 
 
-def test_api_v1_users_put_should_raise_exception(client, user, token):
+def test_api_v1_users_put_should_raise_exception(
+    client, user, other_user, token
+):
     response = client.put(
-        '/api/v1/users/2',
+        f'/api/v1/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'name_updated',
@@ -94,23 +96,15 @@ def test_api_v1_users_put_should_raise_exception(client, user, token):
 
 
 def test_api_v1_users_put_should_raise_exeception_when_is_not_unique(
-    client, user, token
+    client, user, other_user, token
 ):
-    client.post(
-        '/api/v1/users',
-        json={
-            'username': 'test2nd',
-            'email': 'second@email.com',
-            'password': 'test123',
-        },
-    )
     response = client.put(
         f'/api/v1/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
-            'username': 'test2nd',
-            'email': 'second@email.com',
-            'password': 'uPd4t$d',
+            'username': other_user.username,
+            'email': other_user.email,
+            'password': other_user.clean_password,
         },
     )
 
@@ -132,9 +126,11 @@ def test_api_v1_users_get_should_return_user(client, user, token):
     }
 
 
-def test_api_v1_users_get_should_raise_exception(client, user, token):
+def test_api_v1_users_get_should_raise_exception(
+    client, user, other_user, token
+):
     response = client.get(
-        f'/api/v1/users/{user.id + 1}',
+        f'/api/v1/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -151,9 +147,11 @@ def test_api_v1_users_delete_should_remove_user(client, user, token):
     assert response.content == b''
 
 
-def test_api_v1_users_delete_should_raise_exception(client, user, token):
+def test_api_v1_users_delete_should_raise_exception(
+    client, user, other_user, token
+):
     response = client.delete(
-        f'/api/v1/users/{user.id + 1}',
+        f'/api/v1/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
