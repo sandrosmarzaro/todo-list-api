@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from todo_list_api.database import get_session
-from todo_list_api.models import User
+from todo_list_api.models.users import User
 from todo_list_api.settings import Settings
 
 pwd_context = PasswordHash.recommended()

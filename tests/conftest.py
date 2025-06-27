@@ -11,7 +11,7 @@ from sqlalchemy.pool import StaticPool
 
 from todo_list_api.app import app
 from todo_list_api.database import get_session
-from todo_list_api.models import User, table_registry
+from todo_list_api.models.users import User, table_registry
 from todo_list_api.security import get_password_hash
 from todo_list_api.settings import Settings
 
