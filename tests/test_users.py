@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from todo_list_api.schemas import UserPublic
+from todo_list_api.schemas.users import UserResponse
 
 
 def test_api_v1_users_post_should_create_user(client):
@@ -9,7 +9,7 @@ def test_api_v1_users_post_should_create_user(client):
         json={
             'username': 'test_name',
             'email': 'email@example.com',
-            'password': 'test123',
+            'password': 'test1234',
         },
     )
 
@@ -50,7 +50,7 @@ def test_api_v1_users_post_should_raise_email_exception(client, user):
 
 
 def test_api_v1_users_get_should_return_one_in_users(client, user, token):
-    user_schema = UserPublic.model_validate(user).model_dump()
+    user_schema = UserResponse.model_validate(user).model_dump()
     response = client.get(
         '/api/v1/users',
         headers={'Authorization': f'Bearer {token}'},
@@ -67,7 +67,7 @@ def test_api_v1_users_put_should_update_user(client, user, token):
         json={
             'username': 'name_updated',
             'email': 'newemail@example.com',
-            'password': 'uPd4t$d',
+            'password': 'uPd4t$d_',
         },
     )
 
@@ -88,7 +88,7 @@ def test_api_v1_users_put_should_raise_exception(
         json={
             'username': 'name_updated',
             'email': 'newemail@example.com',
-            'password': 'uPd4t$d',
+            'password': 'uPd4t$d_',
         },
     )
 

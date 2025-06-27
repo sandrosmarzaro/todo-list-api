@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from todo_list_api.database import get_session
 from todo_list_api.models import User
-from todo_list_api.schemas import FilterPage, UserList, UserPublic, UserSchema
+from todo_list_api.schemas.filters import FilterPage
+from todo_list_api.schemas.users import (
+    UserCreate,
+    UserResponse,
+    UserResponseList,
+    UserUpdate,
+)
 from todo_list_api.security import (
     get_current_user,
     get_password_hash,
@@ -24,9 +30,9 @@ FilterUsers = Annotated[FilterPage, Query()]
 @router.post(
     '/',
     status_code=HTTPStatus.CREATED,
-    response_model=UserPublic,
+    response_model=UserResponse,
 )
-async def create_user(user: UserSchema, session: Session):
+async def create_user(user: UserCreate, session: Session):
     if db_user := await session.scalar(
         select(User).where(
             (User.username == user.username) | (User.email == user.email)
@@ -58,7 +64,7 @@ async def create_user(user: UserSchema, session: Session):
 @router.get(
     '/',
     status_code=HTTPStatus.OK,
-    response_model=UserList,
+    response_model=UserResponseList,
 )
 async def read_users(
     session: Session,
@@ -75,11 +81,11 @@ async def read_users(
 @router.put(
     '/{user_id}',
     status_code=HTTPStatus.OK,
-    response_model=UserPublic,
+    response_model=UserResponse,
 )
 async def update_user(
     user_id: int,
-    user: UserSchema,
+    user: UserUpdate,
     session: Session,
     current_user: CurrentUser,
 ):
@@ -127,7 +133,7 @@ async def remove_user(
 @router.get(
     '/{user_id}',
     status_code=HTTPStatus.OK,
-    response_model=UserPublic,
+    response_model=UserResponse,
 )
 async def read_user(
     user_id: int,

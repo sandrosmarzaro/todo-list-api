@@ -4,14 +4,14 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 from todo_list_api.routers import auth, users
-from todo_list_api.schemas import MessageClass
+from todo_list_api.schemas.root import HealthCheckResponse
 
 app = FastAPI(title='ToDo List API')
 app.include_router(auth.router)
 app.include_router(users.router)
 
 
-@app.get('/', status_code=HTTPStatus.OK, response_model=MessageClass)
+@app.get('/', status_code=HTTPStatus.OK, response_model=HealthCheckResponse)
 async def read_root():
     return {'message': 'Hello World!'}
 

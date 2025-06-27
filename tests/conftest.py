@@ -76,7 +76,7 @@ class UserFactory(factory.Factory):
 
 @pytest_asyncio.fixture
 async def user(session: AsyncSession):
-    password = 'test123'
+    password = 'test1234'
 
     user = UserFactory(password=get_password_hash(password))
     session.add(user)
@@ -90,7 +90,7 @@ async def user(session: AsyncSession):
 
 @pytest_asyncio.fixture
 async def other_user(session: AsyncSession):
-    password = 'test123'
+    password = 'test1234'
 
     user = UserFactory(password=get_password_hash(password))
     session.add(user)

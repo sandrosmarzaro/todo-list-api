@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from todo_list_api.database import get_session
 from todo_list_api.models import User
-from todo_list_api.schemas import Token
+from todo_list_api.schemas.auth import TokenResponse
 from todo_list_api.security import (
     create_access_token,
     get_current_user,
@@ -22,7 +22,7 @@ OAuthForm = Annotated[OAuth2PasswordRequestForm, Depends()]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-@router.post('/token', response_model=Token)
+@router.post('/token', response_model=TokenResponse)
 async def login_for_access_token(
     form_data: OAuthForm,
     session: Session,
@@ -48,7 +48,7 @@ async def login_for_access_token(
     return {'access_token': access_token, 'token_type': 'Bearer'}
 
 
-@router.post('/refresh_token', response_model=Token)
+@router.post('/refresh_token', response_model=TokenResponse)
 async def refresh_access_token(user: CurrentUser):
     new_access_token = create_access_token(data={'sub': user.email})
     return {'access_token': new_access_token, 'token_type': 'Bearer'}

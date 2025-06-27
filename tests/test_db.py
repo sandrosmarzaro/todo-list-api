@@ -13,7 +13,7 @@ from todo_list_api.models import User
 async def test_should_create_user_in_db(session: AsyncSession, mock_db_time):
     with mock_db_time(model=User) as time:
         new_user = User(
-            username='test_name', email='test@email.com', password='test123'
+            username='test_name', email='test@email.com', password='test1234'
         )
         session.add(new_user)
         await session.commit()
@@ -22,12 +22,12 @@ async def test_should_create_user_in_db(session: AsyncSession, mock_db_time):
 
         assert user.username == 'test_name'
         assert user.email == 'test@email.com'
-        assert user.password == 'test123'
+        assert user.password == 'test1234'
         assert asdict(user) == {
             'id': 1,
             'username': 'test_name',
             'email': 'test@email.com',
-            'password': 'test123',
+            'password': 'test1234',
             'created_at': time,
             'updated_at': time,
         }
