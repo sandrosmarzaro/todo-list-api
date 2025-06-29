@@ -6,7 +6,9 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from todo_list_api.models import table_registry
+from todo_list_api.models.todos import Todo
+from todo_list_api.models.users import User
+from todo_list_api.models.registry import table_registry
 from todo_list_api.settings import Settings
 
 # this is the Alembic Config object, which provides

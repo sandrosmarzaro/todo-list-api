@@ -113,6 +113,7 @@ async def update_user(
 
 @router.delete(
     '/{user_id}',
+    response_model=None,
     status_code=HTTPStatus.NO_CONTENT,
 )
 async def remove_user(

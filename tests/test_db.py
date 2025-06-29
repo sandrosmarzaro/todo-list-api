@@ -30,6 +30,7 @@ async def test_should_create_user_in_db(session: AsyncSession, mock_db_time):
             'password': 'test1234',
             'created_at': time,
             'updated_at': time,
+            'todos': [],
         }
 
 

@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import factory
+import factory.fuzzy
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
@@ -11,7 +12,9 @@ from sqlalchemy.pool import StaticPool
 
 from todo_list_api.app import app
 from todo_list_api.database import get_session
-from todo_list_api.models.users import User, table_registry
+from todo_list_api.models.registry import table_registry
+from todo_list_api.models.todos import Todo, TodoState
+from todo_list_api.models.users import User
 from todo_list_api.security import get_password_hash
 from todo_list_api.settings import Settings
 
@@ -118,3 +121,13 @@ def token(client, user):
 @pytest.fixture
 def settings():
     return Settings()
+
+
+class TodoFactory(factory.Factory):
+    class Meta:
+        model = Todo
+
+    title = factory.Faker('text')
+    description = factory.Faker('text')
+    state = factory.fuzzy.FuzzyChoice(TodoState)
+    user_id = 1
