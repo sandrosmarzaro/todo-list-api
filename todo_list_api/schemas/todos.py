@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 from todo_list_api.models.todos import TodoState
@@ -15,6 +17,8 @@ class TodoCreate(TodoBase):
 
 class TodoResponse(TodoBase):
     id: int
+    created_at: datetime
+    updated_at: datetime
 
 
 class TodoResponseList(BaseModel):

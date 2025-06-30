@@ -25,7 +25,5 @@ class User:
     )
 
     todos: Mapped[list[Todo]] = relationship(
-        init=False,
-        cascade='all, delete-orphan',
-        lazy='selectin'
+        init=False, cascade='all, delete-orphan', lazy='selectin'
     )

@@ -2,27 +2,59 @@ from http import HTTPStatus
 
 import pytest
 
+from todo_list_api.models.todos import Todo
+
 from .conftest import TodoFactory
 
 
-def test_v1_post_create_todo(client, token):
-    response = client.post(
-        '/api/v1/todos',
-        headers={'Authorization': f'Bearer {token}'},
-        json={
+def test_v1_post_create_todo(client, token, mock_db_time):
+    with mock_db_time(model=Todo) as time:
+        response = client.post(
+            '/api/v1/todos',
+            headers={'Authorization': f'Bearer {token}'},
+            json={
+                'title': 'task',
+                'description': 'test',
+                'state': 'draft',
+            },
+        )
+
+        assert response.status_code == HTTPStatus.CREATED
+        assert response.json() == {
+            'id': 1,
             'title': 'task',
             'description': 'test',
             'state': 'draft',
-        },
-    )
+            'created_at': time.isoformat(),
+            'updated_at': time.isoformat(),
+        }
 
-    assert response.status_code == HTTPStatus.CREATED
-    assert response.json() == {
-        'id': 1,
-        'title': 'task',
-        'description': 'test',
-        'state': 'draft',
-    }
+
+@pytest.mark.asyncio
+async def test_v1_post_create_todo_with_all_fields(
+    session, client, user, token, mock_db_time
+):
+    with mock_db_time(model=Todo) as time:
+        todo = TodoFactory.create(user_id=user.id)
+        session.add(todo)
+        await session.commit()
+        await session.refresh(todo)
+
+        response = client.get(
+            '/api/v1/todos',
+            headers={'Authorization': f'Bearer {token}'},
+        )
+
+        assert response.json()['todos'] == [
+            {
+                'id': todo.id,
+                'title': todo.title,
+                'description': todo.description,
+                'state': todo.state,
+                'created_at': time.isoformat(),
+                'updated_at': time.isoformat(),
+            }
+        ]
 
 
 @pytest.mark.asyncio
