@@ -82,14 +82,14 @@ async def test_v1_get_read_with_description_filter(
     expected_todos = 5
     session.add_all(
         TodoFactory.create_batch(
-            expected_todos, user_id=user.id, description='description'
+            expected_todos, user_id=user.id, description='descr1ption'
         )
     )
     session.add_all(TodoFactory.create_batch(expected_todos, user_id=user.id))
     await session.commit()
 
     response = client.get(
-        '/api/v1/todos/?description=desc',
+        '/api/v1/todos/?description=descr1',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -133,8 +133,7 @@ async def test_v1_delete_todo(session, client, token, user):
     assert response.content == b''
 
 
-@pytest.mark.asyncio
-async def test_v1_delete_todo_raise_error(session, client, token, user):
+def test_v1_delete_todo_raise_error(client, token):
     response = client.delete(
         '/api/v1/todos/1',
         headers={'Authorization': f'Bearer {token}'},
@@ -142,3 +141,48 @@ async def test_v1_delete_todo_raise_error(session, client, token, user):
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Task dont exists'}
+
+
+@pytest.mark.asyncio
+async def test_v1_delete_todo_raise_error_antoher_user(
+    session, client, token, other_user
+):
+    todo_other_user = TodoFactory(user_id=other_user.id)
+    session.add(todo_other_user)
+    await session.commit()
+
+    response = client.delete(
+        f'/api/v1/todos/{todo_other_user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Task dont exists'}
+
+
+def test_v1_patch_todo_raise_error(client, token):
+    response = client.patch(
+        '/api/v1/todos/1',
+        headers={'Authorization': f'Bearer {token}'},
+        json={},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Task dont exists'}
+
+
+@pytest.mark.asyncio
+async def test_v1_patch_todo(client, session, user, token):
+    todo = TodoFactory(user_id=user.id)
+
+    session.add(todo)
+    await session.commit()
+
+    response = client.patch(
+        f'/api/v1/todos/{todo.id}',
+        json={'title': 'test'},
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()['title'] == 'test'

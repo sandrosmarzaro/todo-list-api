@@ -13,6 +13,7 @@ from todo_list_api.schemas.todos import (
     TodoCreate,
     TodoResponse,
     TodoResponseList,
+    TodoUpdate,
 )
 from todo_list_api.security import get_current_user
 
@@ -57,14 +58,18 @@ async def read_todos(
 ):
     query = select(Todo).where(Todo.user_id == current_user.id)
 
-    if filters.title:
-        query = query.filter(Todo.title.contains(filters.title))
+    filter_data = filters.model_dump(
+        exclude_unset=True, exclude={'limit', 'offset'}
+    )
 
-    if filters.description:
-        query = query.filter(Todo.description.contains(filters.description))
+    for field_name, field_value in filter_data.items():
+        if hasattr(Todo, field_name):
+            column = getattr(Todo, field_name)
 
-    if filters.state:
-        query = query.filter(Todo.state == filters.state)
+            if field_name in {'title', 'description'}:
+                query = query.filter(column.contains(field_value))
+            else:
+                query = query.filter(column == field_value)
 
     todos = await session.scalars(
         query.limit(filters.limit).offset(filters.offset)
@@ -91,3 +96,30 @@ async def delete_todo(
 
     await session.delete(todo)
     await session.commit()
+
+
+@router.patch(
+    '/{todo_id}', response_model=TodoResponse, status_code=HTTPStatus.OK
+)
+async def update_todo(
+    todo_id: int,
+    todo: TodoUpdate,
+    session: Session,
+    current_user: CurrentUser,
+):
+    todo_db = await session.scalar(
+        select(Todo).where(todo_id == Todo.id, current_user.id == Todo.user_id)
+    )
+    if not todo_db:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Task dont exists'
+        )
+
+    for key, value in todo.model_dump(exclude_unset=True).items():
+        setattr(todo_db, key, value)
+
+    session.add(todo_db)
+    await session.commit()
+    await session.refresh(todo_db)
+
+    return todo_db

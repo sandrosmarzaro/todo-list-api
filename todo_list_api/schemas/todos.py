@@ -19,3 +19,9 @@ class TodoResponse(TodoBase):
 
 class TodoResponseList(BaseModel):
     todos: list[TodoResponse]
+
+
+class TodoUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=3, max_length=255)
+    description: str | None = Field(default=None, max_length=510)
+    state: TodoState | None = None
