@@ -1,0 +1,30 @@
+services:
+  todo_list_db:
+    image: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: database
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  todo_list_app:
+    image: todo_list_api
+    build: .
+    entrypoint: ./entrypoint.sh
+    ports:
+      - "8000:8000"
+    depends_on:
+      - todo_list_db
+    environment:
+      DATABASE_URL: postgresql+psycopg://user:password@todo_list_db:5432/database
+
+volumes:
+  pgdata:
