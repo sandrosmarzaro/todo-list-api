@@ -83,6 +83,7 @@ Base path: `/api/v1`
 
 **Authentication**
 | Method | Endpoint | Description |
+|--------|----------|-------------|
 | POST | `/auth/token` | User login to obtain JWT token |
 | POST | `/auth/refresh_token` | Refresh JWT token |
 
